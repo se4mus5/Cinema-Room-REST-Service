@@ -10,15 +10,9 @@ import java.util.List;
 @Component
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // renames http parameters: camelCase variable -> snake_case http param, alternative @JsonProperty("some_text") or application.properties parameter
 public class Room {
-    private int totalRows;
-    private int totalColumns;
-    private List<Seat> availableSeats;
-
-//    public Room(int totalRows, int totalColumns, List<Seat> availableSeats) {
-//        this.totalRows = totalRows;
-//        this.totalColumns = totalColumns;
-//        this.availableSeats = availableSeats;
-//    }
+    private final int totalRows;
+    private final int totalColumns;
+    private final List<Seat> availableSeats;
 
     public Room() {
         totalRows = 9;
@@ -35,23 +29,32 @@ public class Room {
         return totalRows;
     }
 
-    public void setTotalRows(int totalRows) {
-        this.totalRows = totalRows;
-    }
-
     public int getTotalColumns() {
         return totalColumns;
     }
 
-    public void setTotalColumns(int totalColumns) {
-        this.totalColumns = totalColumns;
-    }
-
+    //TODO change to only return unsold ? depending on tests
+    // dynamically filter with stream
     public List<Seat> getAvailableSeats() {
         return availableSeats;
     }
 
-    public void setAvailableSeats(List<Seat> availableSeats) {
-        this.availableSeats = availableSeats;
+    public Seat bookSeat(int row, int column) {
+        if (row < 1 || column < 1 || row > totalRows || column > totalRows) {
+            throw new IndexOutOfBoundsException("The number of a row or a column is out of bounds!");
+        }
+
+        for (Seat s : availableSeats) {
+            if (s.getRow() == row && s.getColumn() == column) {
+                if (s.isAvailable()) {
+                    s.setAvailable(false);
+                    return s;
+                } else {
+                    throw new RuntimeException("The ticket has been already purchased!");
+                }
+            }
+        }
+
+        throw new RuntimeException("Unexpected server-side error.");
     }
 }
