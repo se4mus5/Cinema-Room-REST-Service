@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.util.Map;
 public class RoomController {
 
     private final Room room;
+    private static final String PASSWORD = "super_secret";
 
     public RoomController(@Autowired Room room) { // obtains room from Spring IoC container via autowiring
         this.room = room;
@@ -40,7 +42,7 @@ public class RoomController {
             // }
             return new ResponseEntity<>(Map.of("token", bookedSeat.getToken(), "ticket", bookedSeat), HttpStatus.OK);
         } catch (RuntimeException e) {
-            throw new SeatPurchaseException(e.getMessage());
+            throw new RequestProcessingException(e.getMessage());
         }
     }
 
@@ -54,16 +56,35 @@ public class RoomController {
             Seat releasedSeat = room().unbookSeat(token);
             return new ResponseEntity<>(Map.of("returned_ticket", releasedSeat), HttpStatus.OK);
         } catch (IOException | RuntimeException e) {
-            throw new SeatPurchaseException(e.getMessage());
+            throw new RequestProcessingException(e.getMessage());
         }
     }
 
-    @ExceptionHandler(SeatPurchaseException.class)
-    public ResponseEntity<Map<String, String>> handleSeatPurchaseException(SeatPurchaseException e) {
+    @PostMapping("/stats")
+    public Stats statistics(@RequestParam String password) {
+        try {
+            if (password.equals(PASSWORD)) {
+                return new Stats(room);
+            } else {
+                throw new RuntimeException();
+            }
+        } catch (RuntimeException e) {
+            throw new AuthenticationException(e.getMessage());
+        }
+    }
+
+    @ExceptionHandler(RequestProcessingException.class)
+    public ResponseEntity<Map<String, String>> handleRequestProcessingException(RequestProcessingException e) {
         // customize response format for exception:
         // {
         //    "error": "... exception message comes here ..."
         // }
         return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({AuthenticationException.class,
+            MissingServletRequestParameterException.class}) // the only request parameter in this logic is auth-related in this logic
+    public ResponseEntity<Map<String, String>> handleAuthenticationException() { // exception needs to match to those declared under @ExceptionHandler
+        return new ResponseEntity<>(Map.of("error", "The password is wrong!"), HttpStatus.UNAUTHORIZED);
     }
 }

@@ -60,10 +60,6 @@ public class Room {
 
     public Seat unbookSeat(String token) {
         for (Seat s : availableSeats) {
-//            if (!s.getToken().isEmpty()) {
-//                System.out.println("## DIAG ## token in memory: " + s.getToken());
-//                System.out.println("## DIAG ## token in param: " + token);
-//            }
             if (s.getToken().equals(token)) { // useful breakpoint for debugging
                 s.setAvailable(true);
                 s.setToken(""); // clear token after refund transaction
@@ -72,5 +68,24 @@ public class Room {
         }
 
         throw new RuntimeException("Wrong token!");
+    }
+
+    public int currentIncome() {
+        return availableSeats.stream()
+                .filter(s -> !s.isAvailable())
+                .mapToInt(s -> s.getPrice())
+                .sum();
+    }
+
+    public int numberOfAvailableSeats() {
+        return Math.toIntExact(availableSeats.stream()
+                .filter(s -> s.isAvailable())
+                .count());
+    }
+
+    public int numberOfPurchasedTickets() {
+        return Math.toIntExact(availableSeats.stream()
+                .filter(s -> !s.isAvailable())
+                .count());
     }
 }
