@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // renames http parameters: camelCase variable -> snake_case http param, alternative @JsonProperty("some_text") or application.properties parameter
@@ -33,8 +34,6 @@ public class Room {
         return totalColumns;
     }
 
-    //TODO change to only return unsold ? depending on tests
-    // dynamically filter with stream
     public List<Seat> getAvailableSeats() {
         return availableSeats;
     }
@@ -48,6 +47,7 @@ public class Room {
             if (s.getRow() == row && s.getColumn() == column) {
                 if (s.isAvailable()) {
                     s.setAvailable(false);
+                    s.setToken(UUID.randomUUID().toString());
                     return s;
                 } else {
                     throw new RuntimeException("The ticket has been already purchased!");
@@ -55,6 +55,22 @@ public class Room {
             }
         }
 
-        throw new RuntimeException("Unexpected server-side error.");
+        throw new RuntimeException("Unexpected server-side error."); // if we get here, data is very likely invalid
+    }
+
+    public Seat unbookSeat(String token) {
+        for (Seat s : availableSeats) {
+//            if (!s.getToken().isEmpty()) {
+//                System.out.println("## DIAG ## token in memory: " + s.getToken());
+//                System.out.println("## DIAG ## token in param: " + token);
+//            }
+            if (s.getToken().equals(token)) { // useful breakpoint for debugging
+                s.setAvailable(true);
+                s.setToken(""); // clear token after refund transaction
+                return s;
+            }
+        }
+
+        throw new RuntimeException("Wrong token!");
     }
 }
