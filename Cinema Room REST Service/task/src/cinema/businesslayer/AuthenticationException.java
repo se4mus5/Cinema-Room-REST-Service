@@ -1,4 +1,4 @@
-package cinema;
+package cinema.businesslayer;
 
 public class AuthenticationException extends RuntimeException {
     public AuthenticationException(String cause) {

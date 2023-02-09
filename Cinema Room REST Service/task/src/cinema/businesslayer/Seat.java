@@ -1,4 +1,4 @@
-package cinema;
+package cinema.businesslayer;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -62,5 +62,14 @@ public class Seat {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    @Override
+    public String toString() {
+        return "Seat{" +
+                "row=" + row +
+                ", column=" + column +
+                ", price=" + price +
+                '}';
     }
 }
